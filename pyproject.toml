@@ -1,24 +1,53 @@
 [tool.poetry]
-name = "discord-train-logger"
-version = "0.1.0"
-description = "Discord webhook notifications for ML training jobs"
-authors = []
+name = "train-logger"
+version = "0.2.0"
+description = "Multi-backend training notifications — Discord, Slack, Telegram, Weights & Biases, and Console"
+authors = ["byeolki <byeolki7007@gmail.com>"]
 readme = "README.md"
-packages = [{include = "discord_train_logger"}]
+packages = [{include = "train_logger"}]
 license = "MIT"
-keywords = ["discord", "webhook", "logging", "machine-learning", "training"]
+keywords = ["discord", "slack", "telegram", "wandb", "webhook", "logging", "machine-learning", "training", "pytorch", "huggingface"]
+homepage = "https://github.com/byeolki/discord-train-logger"
+repository = "https://github.com/byeolki/discord-train-logger"
+documentation = "https://github.com/byeolki/discord-train-logger#readme"
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Communications",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.28.0"
+wandb = {version = ">=0.15.0", optional = true}
+mlflow = {version = ">=2.0.0", optional = true}
+comet-ml = {version = ">=3.0.0", optional = true}
+neptune = {version = ">=1.0.0", optional = true}
+tensorboardX = {version = ">=2.0.0", optional = true}
+aim = {version = ">=3.0.0", optional = true}
+
+[tool.poetry.extras]
+wandb = ["wandb"]
+mlflow = ["mlflow"]
+comet = ["comet-ml"]
+neptune = ["neptune"]
+tensorboard = ["tensorboardX"]
+aim = ["aim"]
+all = ["wandb", "mlflow", "comet-ml", "neptune", "tensorboardX", "aim"]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
+pytest-mock = "^3.12.0"
 black = "^23.0.0"
 ruff = "^0.1.0"
 
@@ -31,3 +60,6 @@ line-length = 100
 
 [tool.ruff]
 line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
