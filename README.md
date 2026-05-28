@@ -1,28 +1,52 @@
-# train-logger
+# ASHi
 
-[![PyPI version](https://img.shields.io/pypi/v/train-logger)](https://pypi.org/project/train-logger/)
-[![Python](https://img.shields.io/pypi/pyversions/train-logger)](https://pypi.org/project/train-logger/)
-[![CI](https://github.com/byeolki/discord-train-logger/actions/workflows/ci.yml/badge.svg)](https://github.com/byeolki/discord-train-logger/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/ashi)](https://pypi.org/project/ashi/)
+[![Python](https://img.shields.io/pypi/pyversions/ashi)](https://pypi.org/project/ashi/)
+[![CI](https://github.com/byeolki/ashi/actions/workflows/ci.yml/badge.svg)](https://github.com/byeolki/ashi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Multi-backend training notifications for ML jobs.
-Connect **Discord**, **Slack**, **Telegram**, and **Console** — all from one logger.
+**One logger. Every destination.**
+
+ASHi fans out ML training events to every platform you care about — notification channels and experiment trackers alike — from a single, uniform API. Stop wiring up each platform separately; call `on_epoch_end()` once and every backend receives it simultaneously.
+
+## Features
+
+- **Notification channels** — Discord, Slack, Telegram, Console
+- **Experiment tracking** — Weights & Biases, MLflow, Comet ML, Neptune, TensorBoard, Aim
+- **Framework callbacks** — HuggingFace Transformers, PyTorch Lightning (zero extra dependencies)
+- **AI summaries** — GPT-powered one-sentence training summaries posted directly to all backends
+- **Fan-out by default** — every event goes to every backend in one call
+- **Resilient** — a failing backend never crashes training; each returns `bool` success
+- **Composable** — mix and match any backends; add more at runtime with `add_backend()`
 
 ## Installation
 
 ```bash
-pip install train-logger
+pip install ashi
+```
+
+Install optional experiment-tracking backends:
+
+```bash
+pip install ashi[wandb]       # Weights & Biases
+pip install ashi[mlflow]      # MLflow
+pip install ashi[comet]       # Comet ML
+pip install ashi[neptune]     # Neptune.ai
+pip install ashi[tensorboard] # TensorBoard
+pip install ashi[aim]         # Aim
+
+pip install ashi[all]         # everything at once
 ```
 
 ## Quick Start
 
 ```python
-from train_logger import TrainLogger, DiscordBackend, SlackBackend, ConsoleBackend
+from ashi import TrainLogger, DiscordBackend, WandbBackend, ConsoleBackend
 
 logger = TrainLogger(
     DiscordBackend(webhook_url="https://discord.com/api/webhooks/..."),
-    SlackBackend(webhook_url="https://hooks.slack.com/services/..."),
-    ConsoleBackend(),  # always available — no webhook needed
+    WandbBackend(project="my-project"),
+    ConsoleBackend(),
 )
 
 logger.on_train_start("my-experiment", config={"epochs": 100, "lr": 3e-4})
@@ -37,146 +61,144 @@ for epoch in range(1, 101):
 logger.on_train_end(total_steps=50000, best_val_loss=0.31)
 ```
 
+Every call fans out to Discord, W&B, and the console simultaneously.
+
 ## Backends
 
-### 알림 채널
+### Notification Channels
 
-| Backend | Install | Notes |
-|---|---|---|
-| `DiscordBackend(webhook_url)` | built-in | Server Settings → Integrations → Webhooks |
-| `SlackBackend(webhook_url)` | built-in | Slack Incoming Webhooks |
-| `TelegramBackend(token, chat_id)` | built-in | Bot via @BotFather |
-| `ConsoleBackend()` | built-in | Prints to stdout. No setup needed |
-
-### 실험 추적 플랫폼
-
-| Backend | Install | Notes |
-|---|---|---|
-| `WandbBackend(project)` | `pip install train-logger[wandb]` | metrics, config, summary, alerts |
-| `MLflowBackend(experiment_name)` | `pip install train-logger[mlflow]` | metrics, params, tags, artifacts |
-| `CometBackend(project_name)` | `pip install train-logger[comet]` | metrics, parameters, models |
-| `NeptuneBackend(project)` | `pip install train-logger[neptune]` | metrics, metadata, artifacts |
-| `TensorBoardBackend(log_dir)` | `pip install train-logger[tensorboard]` | scalars, text (SummaryWriter) |
-| `AimBackend(experiment)` | `pip install train-logger[aim]` | metrics, metadata (local repo) |
-
-모두 한 번에 설치:
-```bash
-pip install train-logger[all]
-```
-
-All backends can be combined. Events are fanned out to all of them simultaneously.
-
-```python
-# Add backends dynamically
-logger = TrainLogger()
-logger.add_backend(DiscordBackend(...))
-logger.add_backend(TelegramBackend(token="...", chat_id="..."))
-```
-
-## 실험 추적 플랫폼
-
-### Weights & Biases
-
-```bash
-pip install train-logger[wandb]
-```
-
-```python
-from train_logger import TrainLogger, WandbBackend, DiscordBackend
-
-logger = TrainLogger(
-    WandbBackend(project="my-project"),   # auto-calls wandb.init()
-    DiscordBackend(webhook_url="..."),    # fan-out to Discord simultaneously
-)
-
-logger.on_train_start("my-experiment", config={"lr": 3e-4, "epochs": 100})
-
-for epoch in range(1, 101):
-    logger.on_epoch_end(epoch, {"loss": 0.42, "val_loss": 0.38}, total_epochs=100, step=epoch * 500)
-
-logger.on_train_end(total_steps=50000, best_val_loss=0.31)
-```
-
-Reuse an already-active run:
-
-```python
-import wandb
-wandb.init(project="my-project", name="run-1")
-
-logger = TrainLogger(WandbBackend(run=wandb.run))
-```
-
-What gets logged to wandb:
-
-| Event | wandb action |
+| Backend | Setup |
 |---|---|
-| `on_train_start` | `wandb.init()` with config (or updates existing run config) |
-| `on_epoch_end` / `on_step_end` | `wandb.log(metrics, step=step)` |
-| `on_best_metric` | `wandb.log({"best/<name>": value})` + `run.summary` update |
-| `on_checkpoint_saved` | `run.summary` — last checkpoint path and step |
-| `on_train_end` | `run.summary` — total steps and best val loss, then `wandb.finish()` |
-| `on_error` | `wandb.alert(level=ERROR)` |
-| `send` / `summarize` | `wandb.alert(level=INFO)` |
+| `DiscordBackend(webhook_url)` | Server Settings → Integrations → Webhooks |
+| `SlackBackend(webhook_url)` | [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks) |
+| `TelegramBackend(token, chat_id)` | Create a bot via @BotFather, get `chat_id` from @userinfobot |
+| `ConsoleBackend()` | No setup — prints to stdout with ANSI colors |
+
+### Experiment Tracking Platforms
+
+| Backend | Install | What gets logged |
+|---|---|---|
+| `WandbBackend(project)` | `ashi[wandb]` | metrics, config, run summary, alerts |
+| `MLflowBackend(experiment_name)` | `ashi[mlflow]` | metrics, params, tags |
+| `CometBackend(project_name)` | `ashi[comet]` | metrics, parameters |
+| `NeptuneBackend(project)` | `ashi[neptune]` | metrics, metadata |
+| `TensorBoardBackend(log_dir)` | `ashi[tensorboard]` | scalars, text |
+| `AimBackend(experiment)` | `ashi[aim]` | metrics, metadata |
+
+Mix backends freely:
+
+```python
+logger = TrainLogger(
+    DiscordBackend(webhook_url="..."),
+    WandbBackend(project="..."),
+    MLflowBackend(experiment_name="..."),
+    ConsoleBackend(),
+)
+```
+
+Or add them after construction:
+
+```python
+logger = TrainLogger()
+logger.add_backend(DiscordBackend(webhook_url="..."))
+logger.add_backend(WandbBackend(project="..."))
+```
 
 ## API Reference
 
-### `TrainLogger(*backends)`
+### `TrainLogger(*backends, summarizer=None)`
 
 | Method | Description |
 |--------|-------------|
-| `on_train_start(experiment, config)` | Green — training started with config fields |
-| `on_epoch_end(epoch, metrics, total_epochs, step)` | Blue — metrics + Unicode progress bar |
-| `on_step_end(step, metrics, total_steps)` | Blue — step-level metrics with progress bar |
-| `on_best_metric(metric_name, value, step)` | Yellow — new best metric alert |
-| `on_checkpoint_saved(step, path)` | Gray — checkpoint saved |
-| `on_train_end(total_steps, best_val_loss)` | Green — training complete summary |
-| `on_error(error, context)` | Red — exception with context |
+| `on_train_start(experiment, config)` | Training started — logs config to trackers, posts to notification channels |
+| `on_epoch_end(epoch, metrics, total_epochs, step)` | Metrics + Unicode progress bar |
+| `on_step_end(step, metrics, total_steps)` | Step-level metrics + progress bar |
+| `on_best_metric(metric_name, value, step)` | New best metric alert |
+| `on_checkpoint_saved(step, path)` | Checkpoint saved notification |
+| `on_train_end(total_steps, best_val_loss)` | Training complete summary |
+| `on_error(error, context)` | Exception with context — sends alert to all backends |
 | `send(message, color)` | Custom one-line message |
-| `send_file(file_path, message, filename)` | File attachment (audio, images, etc.) |
-| `catch_errors(context)` | Context manager — auto-posts `on_error` on exception |
+| `send_file(file_path, message, filename)` | File attachment (images, plots, model weights, etc.) |
+| `catch_errors(context)` | Context manager — auto-calls `on_error` on exception, then re-raises |
+| `summarize()` | Call the AI summarizer and post the result to all backends |
 
-Available colors: `green`, `red`, `yellow`, `blue`, `gray`, `orange`
+Available colors for `send()`: `green`, `red`, `yellow`, `blue`, `gray`, `orange`
 
 ### `catch_errors` context manager
 
 ```python
-with logger.catch_errors("train_step"):
-    loss = model.train_step(batch)
-# If an exception is raised: posts on_error, then re-raises
+with logger.catch_errors("eval_loop"):
+    metrics = model.evaluate(val_dataloader)
+# Any exception → on_error posted to all backends, exception re-raised
 ```
+
+---
+
+## Experiment Tracking Details
+
+### Weights & Biases
+
+```python
+from ashi import TrainLogger, WandbBackend
+
+logger = TrainLogger(WandbBackend(project="my-project"))
+# wandb.init() is called automatically on on_train_start
+```
+
+Reuse an existing run:
+
+```python
+import wandb
+wandb.init(project="my-project", name="run-1")
+logger = TrainLogger(WandbBackend(run=wandb.run))
+```
+
+| Event | wandb action |
+|---|---|
+| `on_train_start` | `wandb.init()` with config, or updates existing run config |
+| `on_epoch_end` / `on_step_end` | `wandb.log(metrics, step=step)` |
+| `on_best_metric` | `wandb.log({"best/<name>": value})` + `run.summary` update |
+| `on_checkpoint_saved` | `run.summary` — last checkpoint path and step |
+| `on_train_end` | `run.summary` update, then `wandb.finish()` |
+| `on_error` | `wandb.alert(level=ERROR)` |
+| `send` / `summarize` | `wandb.alert(level=INFO)` |
+
+Pass `finish_on_end=False` to keep the run open after `on_train_end`.
 
 ### MLflow
 
 ```bash
-pip install train-logger[mlflow]
+pip install ashi[mlflow]
 ```
 
 ```python
-from train_logger import TrainLogger, MLflowBackend
+from ashi import TrainLogger, MLflowBackend
 
-logger = TrainLogger(
-    MLflowBackend(experiment_name="my-project", tracking_uri="http://localhost:5000"),
-)
-# 또는 기본 로컬 저장 (./mlruns)
+# Local ./mlruns directory
 logger = TrainLogger(MLflowBackend())
+
+# Remote tracking server
+logger = TrainLogger(
+    MLflowBackend(experiment_name="my-project", tracking_uri="http://localhost:5000")
+)
 ```
 
-`on_train_start` 때 자동으로 run을 시작하고 config를 param으로 기록합니다.
-`on_train_end` 때 `mlflow.end_run()`을 호출합니다.
+`on_train_start` starts a new run and logs config as params. `on_train_end` calls `mlflow.end_run()`.
 
 ### Comet ML
 
 ```bash
-pip install train-logger[comet]
+pip install ashi[comet]
 ```
 
 ```python
-from train_logger import TrainLogger, CometBackend
+from ashi import TrainLogger, CometBackend
 
 logger = TrainLogger(
-    CometBackend(api_key="...", project_name="my-project", workspace="my-workspace"),
+    CometBackend(api_key="...", project_name="my-project", workspace="my-workspace")
 )
-# 기존 experiment 재사용
+
+# Reuse an existing experiment
 import comet_ml
 exp = comet_ml.Experiment(api_key="...", project_name="...")
 logger = TrainLogger(CometBackend(experiment=exp))
@@ -185,55 +207,55 @@ logger = TrainLogger(CometBackend(experiment=exp))
 ### Neptune
 
 ```bash
-pip install train-logger[neptune]
+pip install ashi[neptune]
 ```
 
 ```python
-from train_logger import TrainLogger, NeptuneBackend
+from ashi import TrainLogger, NeptuneBackend
 
 logger = TrainLogger(
-    NeptuneBackend(project="workspace/project", api_token="..."),
+    NeptuneBackend(project="workspace/project", api_token="...")
 )
-# 기존 run 재사용
+
+# Reuse an existing run
 import neptune
 run = neptune.init_run(project="workspace/project")
 logger = TrainLogger(NeptuneBackend(run=run))
 ```
 
-metrics는 `run["metrics/<name>"].append(value, step=step)` 형태로 기록됩니다.
+Metrics are logged via `run["metrics/<name>"].append(value, step=step)`.
 
 ### TensorBoard
 
 ```bash
-pip install train-logger[tensorboard]
-# 또는 PyTorch와 함께 사용 시 추가 설치 불필요 (torch.utils.tensorboard 사용)
+pip install ashi[tensorboard]
 ```
 
 ```python
-from train_logger import TrainLogger, TensorBoardBackend
+from ashi import TrainLogger, TensorBoardBackend
 
-logger = TrainLogger(
-    TensorBoardBackend(log_dir="runs/my-experiment"),
-)
-# 기존 writer 재사용
+logger = TrainLogger(TensorBoardBackend(log_dir="runs/my-experiment"))
+
+# Reuse an existing SummaryWriter
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter("runs/my-experiment")
 logger = TrainLogger(TensorBoardBackend(writer=writer))
 ```
 
+Works with `torch.utils.tensorboard` (no extra install if PyTorch is already present) or `tensorboardX`.
+
 ### Aim
 
 ```bash
-pip install train-logger[aim]
+pip install ashi[aim]
 ```
 
 ```python
-from train_logger import TrainLogger, AimBackend
+from ashi import TrainLogger, AimBackend
 
-logger = TrainLogger(
-    AimBackend(experiment="my-experiment", repo="."),
-)
-# 기존 run 재사용
+logger = TrainLogger(AimBackend(experiment="my-experiment", repo="."))
+
+# Reuse an existing run
 from aim import Run
 run = Run(experiment="my-experiment")
 logger = TrainLogger(AimBackend(run=run))
@@ -241,40 +263,15 @@ logger = TrainLogger(AimBackend(run=run))
 
 ---
 
-## AI Summary (OpenAI)
+## Framework Callbacks
 
-Pass an `AISummarizer` to get a 1–2 sentence natural language analysis of your training run,
-posted directly to all your backends.
+### HuggingFace Transformers
 
-```python
-from train_logger import TrainLogger, DiscordBackend, AISummarizer
-
-logger = TrainLogger(
-    DiscordBackend(webhook_url="..."),
-    summarizer=AISummarizer(api_key="sk-...", model="gpt-4o-mini"),
-)
-
-# Events are recorded automatically as you log
-logger.on_train_start("my-exp", config={"lr": 3e-4, "epochs": 100})
-for epoch in range(1, 101):
-    logger.on_epoch_end(epoch, {"loss": 0.42, "val_loss": 0.38}, total_epochs=100)
-
-# Posts an orange embed like:
-# "Training is converging steadily — val_loss dropped from 0.89 to 0.38
-#  over 100 epochs with no signs of overfitting."
-logger.summarize()
-```
-
-Call `summarize()` at any point (mid-training, on checkpoint, at the end).
-No extra packages required — uses `requests` directly against the OpenAI API.
-
-## HuggingFace Transformers Callback
-
-No extra dependencies — just pass the callback to `Trainer`.
+No extra dependencies — pass the callback to `Trainer`.
 
 ```python
 from transformers import Trainer
-from train_logger import TrainLogger, DiscordBackend, HuggingFaceCallback
+from ashi import TrainLogger, DiscordBackend, HuggingFaceCallback
 
 logger = TrainLogger(DiscordBackend(webhook_url="..."))
 trainer = Trainer(
@@ -287,11 +284,11 @@ trainer.train()
 
 Hooks: `on_train_begin` → `on_log` (each loss log) → `on_save` → `on_train_end`
 
-## PyTorch Lightning Callback
+### PyTorch Lightning
 
 ```python
 import pytorch_lightning as pl
-from train_logger import TrainLogger, DiscordBackend, LightningCallback
+from ashi import TrainLogger, DiscordBackend, LightningCallback
 
 logger = TrainLogger(DiscordBackend(webhook_url="..."))
 trainer = pl.Trainer(
@@ -303,16 +300,33 @@ trainer.fit(model)
 
 Hooks: `on_train_start` → `on_train_epoch_end` → `on_save_checkpoint` → `on_train_end` → `on_exception`
 
-## PyPI Release
+---
 
-Tag a commit to trigger automated publish:
+## AI Summary (OpenAI)
 
-```bash
-git tag v0.1.0
-git push origin v0.1.0
+Pass an `AISummarizer` to get a 1–2 sentence natural-language analysis of your training run, posted to all backends automatically.
+
+```python
+from ashi import TrainLogger, DiscordBackend, AISummarizer
+
+logger = TrainLogger(
+    DiscordBackend(webhook_url="..."),
+    summarizer=AISummarizer(api_key="sk-...", model="gpt-4o-mini"),
+)
+
+logger.on_train_start("my-exp", config={"lr": 3e-4, "epochs": 100})
+for epoch in range(1, 101):
+    logger.on_epoch_end(epoch, {"loss": 0.42, "val_loss": 0.38}, total_epochs=100)
+
+# Posts an orange message like:
+# "Training is converging steadily — val_loss dropped from 0.89 to 0.38
+#  over 100 epochs with no signs of overfitting."
+logger.summarize()
 ```
 
-Requires a PyPI [Trusted Publisher](https://docs.pypi.org/trusted-publishers/) under the `release` GitHub environment.
+Call `summarize()` at any point — mid-training, on checkpoint, or at the end. No extra packages required beyond `requests`.
+
+---
 
 ## License
 

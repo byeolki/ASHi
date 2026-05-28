@@ -1,4 +1,4 @@
-from train_logger.event import Event, format_metrics, make_progress_bar
+from ashi.event import Event, format_metrics, make_progress_bar
 
 
 def test_make_progress_bar_half():

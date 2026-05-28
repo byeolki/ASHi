@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from train_logger import TrainLogger
-from train_logger.backends.base import Backend
-from train_logger.event import Event
+from ashi import TrainLogger
+from ashi.backends.base import Backend
+from ashi.event import Event
 
 
 class _FakeBackend(Backend):

@@ -53,8 +53,8 @@ class AISummarizer:
 
     Usage::
 
-        from train_logger import TrainLogger, DiscordBackend
-        from train_logger.ai import AISummarizer
+        from ashi import TrainLogger, DiscordBackend
+        from ashi.ai import AISummarizer
 
         logger = TrainLogger(
             DiscordBackend(webhook_url="..."),

@@ -2,10 +2,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from train_logger import AISummarizer, TrainLogger
-from train_logger.ai import _build_context
-from train_logger.backends.base import Backend
-from train_logger.event import Event
+from ashi import AISummarizer, TrainLogger
+from ashi.ai import _build_context
+from ashi.backends.base import Backend
+from ashi.event import Event
 
 
 class _FakeBackend(Backend):
@@ -52,7 +52,7 @@ class TestAISummarizer:
         s = AISummarizer(api_key="sk-test")
         s.record(Event(kind="epoch_end", title="Epoch 1", fields={"loss": "0.5"}))
 
-        with patch("train_logger.ai.requests.post", return_value=_mock_openai("Loss is converging.")) as mock:
+        with patch("ashi.ai.requests.post", return_value=_mock_openai("Loss is converging.")) as mock:
             result = s.summarize()
 
         assert result == "Loss is converging."
@@ -68,14 +68,14 @@ class TestAISummarizer:
         s.record(Event(kind="epoch_end", title="Epoch 1", fields={}))
         err_resp = MagicMock()
         err_resp.raise_for_status.side_effect = req.HTTPError("401")
-        with patch("train_logger.ai.requests.post", return_value=err_resp):
+        with patch("ashi.ai.requests.post", return_value=err_resp):
             with pytest.raises(req.HTTPError):
                 s.summarize()
 
     def test_custom_model(self):
         s = AISummarizer(api_key="sk-test", model="gpt-4o")
         s.record(Event(kind="epoch_end", title="Epoch 1", fields={}))
-        with patch("train_logger.ai.requests.post", return_value=_mock_openai()) as mock:
+        with patch("ashi.ai.requests.post", return_value=_mock_openai()) as mock:
             s.summarize()
         assert mock.call_args.kwargs["json"]["model"] == "gpt-4o"
 
@@ -96,7 +96,7 @@ class TestTrainLoggerSummarize:
         logger.on_train_start("exp", config={"lr": 3e-4})
         logger.on_epoch_end(1, {"loss": 0.5}, total_epochs=10)
 
-        with patch("train_logger.ai.requests.post", return_value=_mock_openai("Looks great!")):
+        with patch("ashi.ai.requests.post", return_value=_mock_openai("Looks great!")):
             result = logger.summarize()
 
         assert result == "Looks great!"

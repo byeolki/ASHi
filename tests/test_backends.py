@@ -3,17 +3,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from train_logger.backends.aim import AimBackend
-from train_logger.backends.comet import CometBackend
-from train_logger.backends.console import ConsoleBackend
-from train_logger.backends.discord import DiscordBackend
-from train_logger.backends.mlflow import MLflowBackend
-from train_logger.backends.neptune import NeptuneBackend
-from train_logger.backends.slack import SlackBackend
-from train_logger.backends.telegram import TelegramBackend
-from train_logger.backends.tensorboard import TensorBoardBackend
-from train_logger.backends.wandb import WandbBackend
-from train_logger.event import Event
+from ashi.backends.aim import AimBackend
+from ashi.backends.comet import CometBackend
+from ashi.backends.console import ConsoleBackend
+from ashi.backends.discord import DiscordBackend
+from ashi.backends.mlflow import MLflowBackend
+from ashi.backends.neptune import NeptuneBackend
+from ashi.backends.slack import SlackBackend
+from ashi.backends.telegram import TelegramBackend
+from ashi.backends.tensorboard import TensorBoardBackend
+from ashi.backends.wandb import WandbBackend
+from ashi.event import Event
 
 
 def _event(**kwargs) -> Event:
@@ -33,19 +33,19 @@ def _mock_resp(status: int = 204, ok: bool = True) -> MagicMock:
 
 class TestDiscordBackend:
     def test_emit_success(self):
-        with patch("train_logger.backends.discord.requests.post", return_value=_mock_resp(204)):
+        with patch("ashi.backends.discord.requests.post", return_value=_mock_resp(204)):
             assert DiscordBackend("https://example.com").emit(_event()) is True
 
     def test_emit_http_error(self):
-        with patch("train_logger.backends.discord.requests.post", return_value=_mock_resp(400)):
+        with patch("ashi.backends.discord.requests.post", return_value=_mock_resp(400)):
             assert DiscordBackend("https://example.com").emit(_event()) is False
 
     def test_emit_network_error(self):
-        with patch("train_logger.backends.discord.requests.post", side_effect=Exception("timeout")):
+        with patch("ashi.backends.discord.requests.post", side_effect=Exception("timeout")):
             assert DiscordBackend("https://example.com").emit(_event()) is False
 
     def test_emit_with_fields_and_description(self):
-        with patch("train_logger.backends.discord.requests.post", return_value=_mock_resp(200)) as mock:
+        with patch("ashi.backends.discord.requests.post", return_value=_mock_resp(200)) as mock:
             DiscordBackend("https://example.com").emit(
                 _event(fields={"loss": "0.42"}, description="progress bar")
             )
@@ -64,19 +64,19 @@ class TestDiscordBackend:
 
 class TestSlackBackend:
     def test_emit_success(self):
-        with patch("train_logger.backends.slack.requests.post", return_value=_mock_resp(200)):
+        with patch("ashi.backends.slack.requests.post", return_value=_mock_resp(200)):
             assert SlackBackend("https://hooks.slack.com/...").emit(_event()) is True
 
     def test_emit_http_error(self):
-        with patch("train_logger.backends.slack.requests.post", return_value=_mock_resp(400)):
+        with patch("ashi.backends.slack.requests.post", return_value=_mock_resp(400)):
             assert SlackBackend("https://hooks.slack.com/...").emit(_event()) is False
 
     def test_emit_network_error(self):
-        with patch("train_logger.backends.slack.requests.post", side_effect=Exception):
+        with patch("ashi.backends.slack.requests.post", side_effect=Exception):
             assert SlackBackend("https://hooks.slack.com/...").emit(_event()) is False
 
     def test_payload_shape(self):
-        with patch("train_logger.backends.slack.requests.post", return_value=_mock_resp(200)) as mock:
+        with patch("ashi.backends.slack.requests.post", return_value=_mock_resp(200)) as mock:
             SlackBackend("https://hooks.slack.com/...").emit(
                 _event(fields={"loss": "0.5"}, description="desc", color="red")
             )
@@ -92,15 +92,15 @@ class TestSlackBackend:
 
 class TestTelegramBackend:
     def test_emit_success(self):
-        with patch("train_logger.backends.telegram.requests.post", return_value=_mock_resp(ok=True)):
+        with patch("ashi.backends.telegram.requests.post", return_value=_mock_resp(ok=True)):
             assert TelegramBackend("TOKEN", "CHAT_ID").emit(_event()) is True
 
     def test_emit_failure(self):
-        with patch("train_logger.backends.telegram.requests.post", return_value=_mock_resp(ok=False)):
+        with patch("ashi.backends.telegram.requests.post", return_value=_mock_resp(ok=False)):
             assert TelegramBackend("TOKEN", "CHAT_ID").emit(_event()) is False
 
     def test_emit_network_error(self):
-        with patch("train_logger.backends.telegram.requests.post", side_effect=Exception):
+        with patch("ashi.backends.telegram.requests.post", side_effect=Exception):
             assert TelegramBackend("TOKEN", "CHAT_ID").emit(_event()) is False
 
     def test_emit_file_missing(self):
@@ -109,7 +109,7 @@ class TestTelegramBackend:
         ) is False
 
     def test_message_format(self):
-        with patch("train_logger.backends.telegram.requests.post", return_value=_mock_resp(ok=True)) as mock:
+        with patch("ashi.backends.telegram.requests.post", return_value=_mock_resp(ok=True)) as mock:
             TelegramBackend("TOKEN", "CHAT_ID").emit(
                 _event(fields={"loss": "0.42"}, color="green")
             )

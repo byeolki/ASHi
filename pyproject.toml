@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "train-logger"
-version = "0.2.0"
-description = "Multi-backend training notifications — Discord, Slack, Telegram, Weights & Biases, and Console"
+name = "ashi"
+version = "0.1.0"
+description = "One logger, every destination — send ML training events to Discord, Slack, Telegram, W&B, MLflow, Comet, Neptune, TensorBoard, Aim, and Console simultaneously"
 authors = ["byeolki <byeolki7007@gmail.com>"]
 readme = "README.md"
-packages = [{include = "train_logger"}]
+packages = [{include = "ashi"}]
 license = "MIT"
-keywords = ["discord", "slack", "telegram", "wandb", "webhook", "logging", "machine-learning", "training", "pytorch", "huggingface"]
-homepage = "https://github.com/byeolki/discord-train-logger"
-repository = "https://github.com/byeolki/discord-train-logger"
-documentation = "https://github.com/byeolki/discord-train-logger#readme"
+keywords = ["discord", "slack", "telegram", "wandb", "mlflow", "comet", "neptune", "tensorboard", "aim", "logging", "machine-learning", "training", "pytorch", "huggingface"]
+homepage = "https://github.com/byeolki/ashi"
+repository = "https://github.com/byeolki/ashi"
+documentation = "https://github.com/byeolki/ashi#readme"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

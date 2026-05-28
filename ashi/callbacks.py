@@ -5,13 +5,13 @@ is required to import them.
 
 HuggingFace example::
 
-    from train_logger import TrainLogger, DiscordBackend, HuggingFaceCallback
+    from ashi import TrainLogger, DiscordBackend, HuggingFaceCallback
     logger = TrainLogger(DiscordBackend(webhook_url="..."))
     trainer = Trainer(..., callbacks=[HuggingFaceCallback(logger, experiment="my-run")])
 
 PyTorch Lightning example::
 
-    from train_logger import TrainLogger, DiscordBackend, LightningCallback
+    from ashi import TrainLogger, DiscordBackend, LightningCallback
     logger = TrainLogger(DiscordBackend(webhook_url="..."))
     trainer = pl.Trainer(..., callbacks=[LightningCallback(logger, experiment="my-run")])
 """
