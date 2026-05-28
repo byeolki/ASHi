@@ -2,7 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/ahsi)](https://pypi.org/project/ahsi/)
 [![Python](https://img.shields.io/pypi/pyversions/ahsi)](https://pypi.org/project/ahsi/)
-[![CI](https://github.com/byeolki/ashi/actions/workflows/ci.yml/badge.svg)](https://github.com/byeolki/ashi/actions/workflows/ci.yml)
+[![CI](https://github.com/byeolki/ASHi/actions/workflows/ci.yml/badge.svg)](https://github.com/byeolki/ASHi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **One logger. Every destination.**
@@ -24,6 +24,8 @@ ASHi fans out ML training events to every platform you care about — notificati
 ```bash
 pip install ahsi
 ```
+
+> **Note:** The PyPI package is `ahsi` but the Python import name is `ashi` — so you always write `from ashi import ...` in your code.
 
 Install optional experiment-tracking backends:
 
