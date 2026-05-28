@@ -1,7 +1,7 @@
 # ASHi
 
-[![PyPI version](https://img.shields.io/pypi/v/ashi)](https://pypi.org/project/ashi/)
-[![Python](https://img.shields.io/pypi/pyversions/ashi)](https://pypi.org/project/ashi/)
+[![PyPI version](https://img.shields.io/pypi/v/ahsi)](https://pypi.org/project/ahsi/)
+[![Python](https://img.shields.io/pypi/pyversions/ahsi)](https://pypi.org/project/ahsi/)
 [![CI](https://github.com/byeolki/ashi/actions/workflows/ci.yml/badge.svg)](https://github.com/byeolki/ashi/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -22,20 +22,20 @@ ASHi fans out ML training events to every platform you care about — notificati
 ## Installation
 
 ```bash
-pip install ashi
+pip install ahsi
 ```
 
 Install optional experiment-tracking backends:
 
 ```bash
-pip install ashi[wandb]       # Weights & Biases
-pip install ashi[mlflow]      # MLflow
-pip install ashi[comet]       # Comet ML
-pip install ashi[neptune]     # Neptune.ai
-pip install ashi[tensorboard] # TensorBoard
-pip install ashi[aim]         # Aim
+pip install ahsi[wandb]       # Weights & Biases
+pip install ahsi[mlflow]      # MLflow
+pip install ahsi[comet]       # Comet ML
+pip install ahsi[neptune]     # Neptune.ai
+pip install ahsi[tensorboard] # TensorBoard
+pip install ahsi[aim]         # Aim
 
-pip install ashi[all]         # everything at once
+pip install ahsi[all]         # everything at once
 ```
 
 ## Quick Start
@@ -78,12 +78,12 @@ Every call fans out to Discord, W&B, and the console simultaneously.
 
 | Backend | Install | What gets logged |
 |---|---|---|
-| `WandbBackend(project)` | `ashi[wandb]` | metrics, config, run summary, alerts |
-| `MLflowBackend(experiment_name)` | `ashi[mlflow]` | metrics, params, tags |
-| `CometBackend(project_name)` | `ashi[comet]` | metrics, parameters |
-| `NeptuneBackend(project)` | `ashi[neptune]` | metrics, metadata |
-| `TensorBoardBackend(log_dir)` | `ashi[tensorboard]` | scalars, text |
-| `AimBackend(experiment)` | `ashi[aim]` | metrics, metadata |
+| `WandbBackend(project)` | `ahsi[wandb]` | metrics, config, run summary, alerts |
+| `MLflowBackend(experiment_name)` | `ahsi[mlflow]` | metrics, params, tags |
+| `CometBackend(project_name)` | `ahsi[comet]` | metrics, parameters |
+| `NeptuneBackend(project)` | `ahsi[neptune]` | metrics, metadata |
+| `TensorBoardBackend(log_dir)` | `ahsi[tensorboard]` | scalars, text |
+| `AimBackend(experiment)` | `ahsi[aim]` | metrics, metadata |
 
 Mix backends freely:
 
@@ -168,7 +168,7 @@ Pass `finish_on_end=False` to keep the run open after `on_train_end`.
 ### MLflow
 
 ```bash
-pip install ashi[mlflow]
+pip install ahsi[mlflow]
 ```
 
 ```python
@@ -188,7 +188,7 @@ logger = TrainLogger(
 ### Comet ML
 
 ```bash
-pip install ashi[comet]
+pip install ahsi[comet]
 ```
 
 ```python
@@ -207,7 +207,7 @@ logger = TrainLogger(CometBackend(experiment=exp))
 ### Neptune
 
 ```bash
-pip install ashi[neptune]
+pip install ahsi[neptune]
 ```
 
 ```python
@@ -228,7 +228,7 @@ Metrics are logged via `run["metrics/<name>"].append(value, step=step)`.
 ### TensorBoard
 
 ```bash
-pip install ashi[tensorboard]
+pip install ahsi[tensorboard]
 ```
 
 ```python
@@ -247,7 +247,7 @@ Works with `torch.utils.tensorboard` (no extra install if PyTorch is already pre
 ### Aim
 
 ```bash
-pip install ashi[aim]
+pip install ahsi[aim]
 ```
 
 ```python
