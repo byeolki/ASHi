@@ -17,7 +17,7 @@ def _call_openai(api_key: str, model: str, messages: list, timeout: int) -> str:
     resp = requests.post(
         "https://api.openai.com/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={"model": model, "messages": messages, "max_completion_tokens": 150, "temperature": 0.3},
+        json={"model": model, "messages": messages, "max_completion_tokens": 150},
         timeout=timeout,
     )
     resp.raise_for_status()
