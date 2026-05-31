@@ -4,13 +4,18 @@ import requests
 
 from .event import Event
 
-_SYSTEM_PROMPT = (
+_SYSTEM_PROMPT_TEMPLATE = (
     "You are a machine learning training monitor. "
     "Analyze the training metrics below and summarize in 1-2 sentences "
     "whether training is progressing well. "
     "Be specific: mention trends (converging, diverging, overfitting, plateau, etc.) "
-    "and the most relevant metric values. Do not use bullet points."
+    "and the most relevant metric values. Do not use bullet points. "
+    "Respond in {language}."
 )
+
+
+def _build_system_prompt(language: str) -> str:
+    return _SYSTEM_PROMPT_TEMPLATE.format(language=language)
 
 
 def _call_openai(api_key: str, model: str, messages: list, timeout: int) -> str:
@@ -34,7 +39,11 @@ def _build_context(experiment: str, config: dict, log: list[dict]) -> str:
     lines.append("\nTraining log (chronological):")
 
     # First 3 + last 10 entries to keep context concise
-    entries = log[:3] + (log[3:-10] and ["  ... ({} entries omitted) ...".format(len(log) - 13)]) + log[-10:]
+    entries = (
+        log[:3]
+        + (log[3:-10] and ["  ... ({} entries omitted) ...".format(len(log) - 13)])
+        + log[-10:]
+    )
     for entry in entries:
         if isinstance(entry, str):
             lines.append(entry)
@@ -58,7 +67,7 @@ class AISummarizer:
 
         logger = TrainLogger(
             DiscordBackend(webhook_url="..."),
-            summarizer=AISummarizer(api_key="sk-..."),
+            summarizer=AISummarizer(api_key="sk-...", language="Korean"),
         )
 
         # ... train ...
@@ -71,10 +80,12 @@ class AISummarizer:
         api_key: str,
         model: str = "gpt-4o-mini",
         timeout: int = 30,
+        language: str = "English",
     ):
         self._api_key = api_key
         self._model = model
         self._timeout = timeout
+        self._language = language
         self._experiment: str = ""
         self._config: dict = {}
         self._log: list[dict] = []
@@ -83,7 +94,14 @@ class AISummarizer:
         if event.kind == "train_start":
             self._experiment = event.fields.get("Experiment", "")
             self._config = {k: v for k, v in event.fields.items() if k != "Experiment"}
-        elif event.kind in ("epoch_end", "step_end", "best_metric", "checkpoint", "train_end", "error"):
+        elif event.kind in (
+            "epoch_end",
+            "step_end",
+            "best_metric",
+            "checkpoint",
+            "train_end",
+            "error",
+        ):
             self._log.append({"title": event.title, "fields": dict(event.fields)})
 
     def summarize(self) -> str:
@@ -96,7 +114,7 @@ class AISummarizer:
 
         context = _build_context(self._experiment, self._config, self._log)
         messages = [
-            {"role": "system", "content": _SYSTEM_PROMPT},
+            {"role": "system", "content": _build_system_prompt(self._language)},
             {"role": "user", "content": context},
         ]
         return _call_openai(self._api_key, self._model, messages, self._timeout)

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from ashi import AISummarizer, TrainLogger
-from ashi.ai import _build_context
+from ashi.ai import _build_context, _build_system_prompt
 from ashi.backends.base import Backend
 from ashi.event import Event
 
@@ -27,6 +27,7 @@ def _mock_openai(text: str = "Training looks good."):
 
 # ── AISummarizer unit tests ───────────────────────────────────────────────────
 
+
 class TestAISummarizer:
     def test_summarize_no_history(self):
         s = AISummarizer(api_key="sk-test")
@@ -34,7 +35,13 @@ class TestAISummarizer:
 
     def test_record_train_start(self):
         s = AISummarizer(api_key="sk-test")
-        s.record(Event(kind="train_start", title="Training Started", fields={"Experiment": "exp", "lr": "3e-4"}))
+        s.record(
+            Event(
+                kind="train_start",
+                title="Training Started",
+                fields={"Experiment": "exp", "lr": "3e-4"},
+            )
+        )
         assert s._experiment == "exp"
         assert s._config["lr"] == "3e-4"
 
@@ -52,7 +59,9 @@ class TestAISummarizer:
         s = AISummarizer(api_key="sk-test")
         s.record(Event(kind="epoch_end", title="Epoch 1", fields={"loss": "0.5"}))
 
-        with patch("ashi.ai.requests.post", return_value=_mock_openai("Loss is converging.")) as mock:
+        with patch(
+            "ashi.ai.requests.post", return_value=_mock_openai("Loss is converging.")
+        ) as mock:
             result = s.summarize()
 
         assert result == "Loss is converging."
@@ -64,6 +73,7 @@ class TestAISummarizer:
 
     def test_summarize_http_error_propagates(self):
         import requests as req
+
         s = AISummarizer(api_key="sk-bad")
         s.record(Event(kind="epoch_end", title="Epoch 1", fields={}))
         err_resp = MagicMock()
@@ -79,8 +89,32 @@ class TestAISummarizer:
             s.summarize()
         assert mock.call_args.kwargs["json"]["model"] == "gpt-4o"
 
+    def test_default_language_is_english(self):
+        s = AISummarizer(api_key="sk-test")
+        assert s._language == "English"
+        prompt = _build_system_prompt(s._language)
+        assert "English" in prompt
+
+    def test_custom_language_in_system_prompt(self):
+        s = AISummarizer(api_key="sk-test", language="Korean")
+        s.record(Event(kind="epoch_end", title="Epoch 1", fields={"loss": "0.5"}))
+        with patch(
+            "ashi.ai.requests.post", return_value=_mock_openai("학습이 잘 진행되고 있습니다.")
+        ) as mock:
+            result = s.summarize()
+        system_msg = mock.call_args.kwargs["json"]["messages"][0]["content"]
+        assert "Korean" in system_msg
+        assert result == "학습이 잘 진행되고 있습니다."
+
+
+def test_build_system_prompt_contains_language():
+    assert "Korean" in _build_system_prompt("Korean")
+    assert "Japanese" in _build_system_prompt("Japanese")
+    assert "English" in _build_system_prompt("English")
+
 
 # ── TrainLogger.summarize integration ────────────────────────────────────────
+
 
 class TestTrainLoggerSummarize:
     def test_summarize_no_summarizer_raises(self):
@@ -118,8 +152,11 @@ class TestTrainLoggerSummarize:
 
 # ── _build_context ─────────────────────────────────────────────────────────────
 
+
 def test_build_context_includes_experiment():
-    ctx = _build_context("my-exp", {"lr": "3e-4"}, [{"title": "Epoch 1", "fields": {"loss": "0.5"}}])
+    ctx = _build_context(
+        "my-exp", {"lr": "3e-4"}, [{"title": "Epoch 1", "fields": {"loss": "0.5"}}]
+    )
     assert "my-exp" in ctx
     assert "lr=3e-4" in ctx
     assert "loss=0.5" in ctx
