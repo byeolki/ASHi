@@ -69,23 +69,23 @@ Every call fans out to Discord, W&B, and the console simultaneously.
 
 ### Notification Channels
 
-| Backend | Setup |
-|---|---|
-| `DiscordBackend(webhook_url)` | Server Settings → Integrations → Webhooks |
-| `SlackBackend(webhook_url)` | [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks) |
-| `TelegramBackend(token, chat_id)` | Create a bot via @BotFather, get `chat_id` from @userinfobot |
-| `ConsoleBackend()` | No setup — prints to stdout with ANSI colors |
+| Backend                           | Setup                                                               |
+| --------------------------------- | ------------------------------------------------------------------- |
+| `DiscordBackend(webhook_url)`     | Server Settings → Integrations → Webhooks                           |
+| `SlackBackend(webhook_url)`       | [Slack Incoming Webhooks](https://api.slack.com/messaging/webhooks) |
+| `TelegramBackend(token, chat_id)` | Create a bot via @BotFather, get `chat_id` from @userinfobot        |
+| `ConsoleBackend()`                | No setup — prints to stdout with ANSI colors                        |
 
 ### Experiment Tracking Platforms
 
-| Backend | Install | What gets logged |
-|---|---|---|
-| `WandbBackend(project)` | `ahsi[wandb]` | metrics, config, run summary, alerts |
-| `MLflowBackend(experiment_name)` | `ahsi[mlflow]` | metrics, params, tags |
-| `CometBackend(project_name)` | `ahsi[comet]` | metrics, parameters |
-| `NeptuneBackend(project)` | `ahsi[neptune]` | metrics, metadata |
-| `TensorBoardBackend(log_dir)` | `ahsi[tensorboard]` | scalars, text |
-| `AimBackend(experiment)` | `ahsi[aim]` | metrics, metadata |
+| Backend                          | Install             | What gets logged                     |
+| -------------------------------- | ------------------- | ------------------------------------ |
+| `WandbBackend(project)`          | `ahsi[wandb]`       | metrics, config, run summary, alerts |
+| `MLflowBackend(experiment_name)` | `ahsi[mlflow]`      | metrics, params, tags                |
+| `CometBackend(project_name)`     | `ahsi[comet]`       | metrics, parameters                  |
+| `NeptuneBackend(project)`        | `ahsi[neptune]`     | metrics, metadata                    |
+| `TensorBoardBackend(log_dir)`    | `ahsi[tensorboard]` | scalars, text                        |
+| `AimBackend(experiment)`         | `ahsi[aim]`         | metrics, metadata                    |
 
 Mix backends freely:
 
@@ -110,19 +110,19 @@ logger.add_backend(WandbBackend(project="..."))
 
 ### `TrainLogger(*backends, summarizer=None)`
 
-| Method | Description |
-|--------|-------------|
-| `on_train_start(experiment, config)` | Training started — logs config to trackers, posts to notification channels |
-| `on_epoch_end(epoch, metrics, total_epochs, step)` | Metrics + Unicode progress bar |
-| `on_step_end(step, metrics, total_steps)` | Step-level metrics + progress bar |
-| `on_best_metric(metric_name, value, step)` | New best metric alert |
-| `on_checkpoint_saved(step, path)` | Checkpoint saved notification |
-| `on_train_end(total_steps, best_val_loss)` | Training complete summary |
-| `on_error(error, context)` | Exception with context — sends alert to all backends |
-| `send(message, color)` | Custom one-line message |
-| `send_file(file_path, message, filename)` | File attachment (images, plots, model weights, etc.) |
-| `catch_errors(context)` | Context manager — auto-calls `on_error` on exception, then re-raises |
-| `summarize()` | Call the AI summarizer and post the result to all backends |
+| Method                                             | Description                                                                |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| `on_train_start(experiment, config)`               | Training started — logs config to trackers, posts to notification channels |
+| `on_epoch_end(epoch, metrics, total_epochs, step)` | Metrics + Unicode progress bar                                             |
+| `on_step_end(step, metrics, total_steps)`          | Step-level metrics + progress bar                                          |
+| `on_best_metric(metric_name, value, step)`         | New best metric alert                                                      |
+| `on_checkpoint_saved(step, path)`                  | Checkpoint saved notification                                              |
+| `on_train_end(total_steps, best_val_loss)`         | Training complete summary                                                  |
+| `on_error(error, context)`                         | Exception with context — sends alert to all backends                       |
+| `send(message, color)`                             | Custom one-line message                                                    |
+| `send_file(file_path, message, filename)`          | File attachment (images, plots, model weights, etc.)                       |
+| `catch_errors(context)`                            | Context manager — auto-calls `on_error` on exception, then re-raises       |
+| `summarize()`                                      | Call the AI summarizer and post the result to all backends                 |
 
 Available colors for `send()`: `green`, `red`, `yellow`, `blue`, `gray`, `orange`
 
@@ -155,15 +155,15 @@ wandb.init(project="my-project", name="run-1")
 logger = TrainLogger(WandbBackend(run=wandb.run))
 ```
 
-| Event | wandb action |
-|---|---|
-| `on_train_start` | `wandb.init()` with config, or updates existing run config |
-| `on_epoch_end` / `on_step_end` | `wandb.log(metrics, step=step)` |
-| `on_best_metric` | `wandb.log({"best/<name>": value})` + `run.summary` update |
-| `on_checkpoint_saved` | `run.summary` — last checkpoint path and step |
-| `on_train_end` | `run.summary` update, then `wandb.finish()` |
-| `on_error` | `wandb.alert(level=ERROR)` |
-| `send` / `summarize` | `wandb.alert(level=INFO)` |
+| Event                          | wandb action                                               |
+| ------------------------------ | ---------------------------------------------------------- |
+| `on_train_start`               | `wandb.init()` with config, or updates existing run config |
+| `on_epoch_end` / `on_step_end` | `wandb.log(metrics, step=step)`                            |
+| `on_best_metric`               | `wandb.log({"best/<name>": value})` + `run.summary` update |
+| `on_checkpoint_saved`          | `run.summary` — last checkpoint path and step              |
+| `on_train_end`                 | `run.summary` update, then `wandb.finish()`                |
+| `on_error`                     | `wandb.alert(level=ERROR)`                                 |
+| `send` / `summarize`           | `wandb.alert(level=INFO)`                                  |
 
 Pass `finish_on_end=False` to keep the run open after `on_train_end`.
 
@@ -325,6 +325,21 @@ for epoch in range(1, 101):
 #  over 100 epochs with no signs of overfitting."
 logger.summarize()
 ```
+
+AI summaries are English by default. Set `language` to receive summaries in another language:
+
+```python
+logger = TrainLogger(
+    DiscordBackend(webhook_url="..."),
+    summarizer=AISummarizer(api_key="sk-...", language="Korean"),
+)
+
+# Example output:
+# "학습은 안정적으로 수렴 중이며, val_loss가 0.89에서 0.38까지 감소했습니다."
+logger.summarize()
+```
+
+You can pass any language instruction supported by the model, such as `"Korean"`, `"Japanese"`, or `"Spanish"`.
 
 Call `summarize()` at any point — mid-training, on checkpoint, or at the end. No extra packages required beyond `requests`.
 
