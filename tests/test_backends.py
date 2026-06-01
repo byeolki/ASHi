@@ -1,8 +1,6 @@
 import sys
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from ashi.backends.aim import AimBackend
 from ashi.backends.comet import CometBackend
 from ashi.backends.console import ConsoleBackend
@@ -31,6 +29,7 @@ def _mock_resp(status: int = 204, ok: bool = True) -> MagicMock:
 
 # ── Discord ──────────────────────────────────────────────────────────────────
 
+
 class TestDiscordBackend:
     def test_emit_success(self):
         with patch("ashi.backends.discord.requests.post", return_value=_mock_resp(204)):
@@ -55,12 +54,14 @@ class TestDiscordBackend:
             assert embed["description"] == "progress bar"
 
     def test_emit_file_missing(self):
-        assert DiscordBackend("https://example.com").emit(
-            _event(file_path="/nonexistent/file.pt")
-        ) is False
+        assert (
+            DiscordBackend("https://example.com").emit(_event(file_path="/nonexistent/file.pt"))
+            is False
+        )
 
 
 # ── Slack ─────────────────────────────────────────────────────────────────────
+
 
 class TestSlackBackend:
     def test_emit_success(self):
@@ -90,6 +91,7 @@ class TestSlackBackend:
 
 # ── Telegram ──────────────────────────────────────────────────────────────────
 
+
 class TestTelegramBackend:
     def test_emit_success(self):
         with patch("ashi.backends.telegram.requests.post", return_value=_mock_resp(ok=True)):
@@ -104,21 +106,23 @@ class TestTelegramBackend:
             assert TelegramBackend("TOKEN", "CHAT_ID").emit(_event()) is False
 
     def test_emit_file_missing(self):
-        assert TelegramBackend("TOKEN", "CHAT_ID").emit(
-            _event(file_path="/nonexistent/file.pt")
-        ) is False
+        assert (
+            TelegramBackend("TOKEN", "CHAT_ID").emit(_event(file_path="/nonexistent/file.pt"))
+            is False
+        )
 
     def test_message_format(self):
-        with patch("ashi.backends.telegram.requests.post", return_value=_mock_resp(ok=True)) as mock:
-            TelegramBackend("TOKEN", "CHAT_ID").emit(
-                _event(fields={"loss": "0.42"}, color="green")
-            )
+        with patch(
+            "ashi.backends.telegram.requests.post", return_value=_mock_resp(ok=True)
+        ) as mock:
+            TelegramBackend("TOKEN", "CHAT_ID").emit(_event(fields={"loss": "0.42"}, color="green"))
             body = mock.call_args.kwargs["json"]
             assert "Test" in body["text"]
             assert "loss" in body["text"]
 
 
 # ── Wandb ─────────────────────────────────────────────────────────────────────
+
 
 class TestWandbBackend:
     def _mock_wandb(self):
@@ -132,8 +136,13 @@ class TestWandbBackend:
         wandb = self._mock_wandb()
         with patch.dict(sys.modules, {"wandb": wandb}):
             backend = WandbBackend(project="test-project")
-            result = backend.emit(_event(kind="train_start", title="Training Started",
-                                         fields={"Experiment": "my-exp", "lr": "3e-4"}))
+            result = backend.emit(
+                _event(
+                    kind="train_start",
+                    title="Training Started",
+                    fields={"Experiment": "my-exp", "lr": "3e-4"},
+                )
+            )
         assert result is True
         wandb.init.assert_called_once()
         call_kwargs = wandb.init.call_args.kwargs
@@ -146,8 +155,13 @@ class TestWandbBackend:
         wandb.run = existing_run
         with patch.dict(sys.modules, {"wandb": wandb}):
             backend = WandbBackend()
-            backend.emit(_event(kind="train_start", title="Training Started",
-                                fields={"Experiment": "exp", "lr": "1e-3"}))
+            backend.emit(
+                _event(
+                    kind="train_start",
+                    title="Training Started",
+                    fields={"Experiment": "exp", "lr": "1e-3"},
+                )
+            )
         wandb.init.assert_not_called()
         existing_run.config.update.assert_called_once_with({"lr": "1e-3"})
 
@@ -156,8 +170,14 @@ class TestWandbBackend:
         run = MagicMock()
         with patch.dict(sys.modules, {"wandb": wandb}):
             backend = WandbBackend(run=run)
-            backend.emit(_event(kind="epoch_end", title="Epoch 1 / 10",
-                                fields={"loss": "0.4200", "val_loss": "0.3800"}, step=500))
+            backend.emit(
+                _event(
+                    kind="epoch_end",
+                    title="Epoch 1 / 10",
+                    fields={"loss": "0.4200", "val_loss": "0.3800"},
+                    step=500,
+                )
+            )
         wandb.log.assert_called_once_with({"loss": 0.42, "val_loss": 0.38}, step=500)
 
     def test_best_metric_logs_and_updates_summary(self):
@@ -165,8 +185,14 @@ class TestWandbBackend:
         run = MagicMock()
         with patch.dict(sys.modules, {"wandb": wandb}):
             backend = WandbBackend(run=run)
-            backend.emit(_event(kind="best_metric", title="New Best: val_loss",
-                                fields={"val_loss": "0.3100", "Step": "1000"}, step=1000))
+            backend.emit(
+                _event(
+                    kind="best_metric",
+                    title="New Best: val_loss",
+                    fields={"val_loss": "0.3100", "Step": "1000"},
+                    step=1000,
+                )
+            )
         wandb.log.assert_called_once_with({"best/val_loss": 0.31}, step=1000)
         run.summary.update.assert_called_once_with({"best/val_loss": 0.31})
 
@@ -176,8 +202,13 @@ class TestWandbBackend:
         run.summary = {}
         with patch.dict(sys.modules, {"wandb": wandb}):
             backend = WandbBackend(run=run)
-            backend.emit(_event(kind="train_end", title="Training Complete",
-                                fields={"Total Steps": "50000", "Best Val Loss": "0.3100"}))
+            backend.emit(
+                _event(
+                    kind="train_end",
+                    title="Training Complete",
+                    fields={"Total Steps": "50000", "Best Val Loss": "0.3100"},
+                )
+            )
         assert run.summary["total_steps"] == 50000.0
         assert run.summary["best_val_loss"] == 0.31
         wandb.finish.assert_called_once()
@@ -187,8 +218,9 @@ class TestWandbBackend:
         run = MagicMock()
         with patch.dict(sys.modules, {"wandb": wandb}):
             backend = WandbBackend(run=run, finish_on_end=False)
-            backend.emit(_event(kind="train_end", title="Training Complete",
-                                fields={"Total Steps": "100"}))
+            backend.emit(
+                _event(kind="train_end", title="Training Complete", fields={"Total Steps": "100"})
+            )
         wandb.finish.assert_not_called()
 
     def test_error_sends_alert(self):
@@ -216,6 +248,7 @@ class TestWandbBackend:
 
 # ── MLflow ────────────────────────────────────────────────────────────────────
 
+
 class TestMLflowBackend:
     def _mock_mlflow(self, active_run=None):
         mlflow = MagicMock()
@@ -226,7 +259,9 @@ class TestMLflowBackend:
         mlflow = self._mock_mlflow()
         with patch.dict(sys.modules, {"mlflow": mlflow}):
             backend = MLflowBackend(experiment_name="my-exp")
-            result = backend.emit(_event(kind="train_start", fields={"Experiment": "run-1", "lr": "3e-4"}))
+            result = backend.emit(
+                _event(kind="train_start", fields={"Experiment": "run-1", "lr": "3e-4"})
+            )
         assert result is True
         mlflow.start_run.assert_called_once_with(run_id=None, run_name="run-1")
         mlflow.log_params.assert_called_once_with({"lr": "3e-4"})
@@ -243,7 +278,9 @@ class TestMLflowBackend:
         with patch.dict(sys.modules, {"mlflow": mlflow}):
             backend = MLflowBackend()
             backend._started = True
-            backend.emit(_event(kind="epoch_end", fields={"loss": "0.42", "val_loss": "0.38"}, step=100))
+            backend.emit(
+                _event(kind="epoch_end", fields={"loss": "0.42", "val_loss": "0.38"}, step=100)
+            )
         mlflow.log_metrics.assert_called_once_with({"loss": 0.42, "val_loss": 0.38}, step=100)
 
     def test_train_end_logs_summary_and_ends(self):
@@ -251,7 +288,9 @@ class TestMLflowBackend:
         with patch.dict(sys.modules, {"mlflow": mlflow}):
             backend = MLflowBackend()
             backend._started = True
-            backend.emit(_event(kind="train_end", fields={"Total Steps": "50000", "Best Val Loss": "0.31"}))
+            backend.emit(
+                _event(kind="train_end", fields={"Total Steps": "50000", "Best Val Loss": "0.31"})
+            )
         mlflow.log_metrics.assert_called_once_with({"total_steps": 50000.0, "best_val_loss": 0.31})
         mlflow.end_run.assert_called_once()
 
@@ -271,6 +310,7 @@ class TestMLflowBackend:
 
 # ── Comet ML ──────────────────────────────────────────────────────────────────
 
+
 class TestCometBackend:
     def _mock_comet_ml(self):
         comet_ml = MagicMock()
@@ -280,7 +320,9 @@ class TestCometBackend:
         comet_ml = self._mock_comet_ml()
         with patch.dict(sys.modules, {"comet_ml": comet_ml}):
             backend = CometBackend(project_name="my-project")
-            result = backend.emit(_event(kind="train_start", fields={"Experiment": "run-1", "lr": "1e-3"}))
+            result = backend.emit(
+                _event(kind="train_start", fields={"Experiment": "run-1", "lr": "1e-3"})
+            )
         assert result is True
         comet_ml.Experiment.assert_called_once()
         comet_ml.Experiment.return_value.set_name.assert_called_once_with("run-1")
@@ -319,6 +361,7 @@ class TestCometBackend:
 
 # ── Neptune ───────────────────────────────────────────────────────────────────
 
+
 class TestNeptuneBackend:
     def _mock_neptune(self):
         neptune = MagicMock()
@@ -328,7 +371,9 @@ class TestNeptuneBackend:
         neptune = self._mock_neptune()
         with patch.dict(sys.modules, {"neptune": neptune}):
             backend = NeptuneBackend(project="org/project")
-            result = backend.emit(_event(kind="train_start", fields={"Experiment": "run-1", "lr": "3e-4"}))
+            result = backend.emit(
+                _event(kind="train_start", fields={"Experiment": "run-1", "lr": "3e-4"})
+            )
         assert result is True
         neptune.init_run.assert_called_once_with(name="run-1", project="org/project")
 
@@ -364,6 +409,7 @@ class TestNeptuneBackend:
 
 # ── TensorBoard ───────────────────────────────────────────────────────────────
 
+
 class TestTensorBoardBackend:
     def test_epoch_end_adds_scalars(self):
         writer = MagicMock()
@@ -376,7 +422,9 @@ class TestTensorBoardBackend:
     def test_best_metric_adds_scalar(self):
         writer = MagicMock()
         backend = TensorBoardBackend(writer=writer)
-        backend.emit(_event(kind="best_metric", fields={"val_loss": "0.31", "Step": "100"}, step=100))
+        backend.emit(
+            _event(kind="best_metric", fields={"val_loss": "0.31", "Step": "100"}, step=100)
+        )
         writer.add_scalar.assert_called_once_with("best/val_loss", 0.31, global_step=100)
 
     def test_train_end_closes_writer(self):
@@ -392,13 +440,21 @@ class TestTensorBoardBackend:
         writer.add_text.assert_called_with("error", "OOM")
 
     def test_no_tensorboard_installed_returns_false(self):
-        with patch.dict(sys.modules, {"torch": None, "torch.utils": None,
-                                       "torch.utils.tensorboard": None, "tensorboardX": None}):
+        with patch.dict(
+            sys.modules,
+            {
+                "torch": None,
+                "torch.utils": None,
+                "torch.utils.tensorboard": None,
+                "tensorboardX": None,
+            },
+        ):
             backend = TensorBoardBackend()
             assert backend.emit(_event(kind="epoch_end", fields={"loss": "0.5"})) is False
 
 
 # ── Aim ───────────────────────────────────────────────────────────────────────
+
 
 class TestAimBackend:
     def _mock_aim(self):
@@ -409,7 +465,9 @@ class TestAimBackend:
         aim = self._mock_aim()
         with patch.dict(sys.modules, {"aim": aim}):
             backend = AimBackend(experiment="my-exp")
-            result = backend.emit(_event(kind="train_start", fields={"Experiment": "run-1", "lr": "3e-4"}))
+            result = backend.emit(
+                _event(kind="train_start", fields={"Experiment": "run-1", "lr": "3e-4"})
+            )
         assert result is True
         aim.Run.assert_called_once_with(experiment="my-exp")
 
@@ -444,6 +502,7 @@ class TestAimBackend:
 
 
 # ── Console ───────────────────────────────────────────────────────────────────
+
 
 class TestConsoleBackend:
     def test_emit_always_true(self, capsys):

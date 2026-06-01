@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ..event import Event
 from .base import Backend
@@ -35,11 +35,13 @@ class TensorBoardBackend(Backend):
     def _writer_class():
         try:
             from torch.utils.tensorboard import SummaryWriter
+
             return SummaryWriter
         except ImportError:
             pass
         try:
             from tensorboardX import SummaryWriter
+
             return SummaryWriter
         except ImportError:
             pass

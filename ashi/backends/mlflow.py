@@ -40,6 +40,7 @@ class MLflowBackend(Backend):
     def _mlflow():
         try:
             import mlflow
+
             return mlflow
         except ImportError as exc:
             raise ImportError("mlflow is required: pip install mlflow") from exc

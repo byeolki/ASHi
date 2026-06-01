@@ -49,11 +49,10 @@ class WandbBackend(Backend):
     def _wandb():
         try:
             import wandb
+
             return wandb
         except ImportError as exc:
-            raise ImportError(
-                "wandb is required for WandbBackend: pip install wandb"
-            ) from exc
+            raise ImportError("wandb is required for WandbBackend: pip install wandb") from exc
 
     def _active_run(self):
         wandb = self._wandb()
@@ -108,9 +107,7 @@ class WandbBackend(Backend):
             # ---- best metric ----------------------------------------
             elif kind == "best_metric":
                 metrics = {
-                    f"best/{k}": _to_float(v)
-                    for k, v in event.fields.items()
-                    if k != "Step"
+                    f"best/{k}": _to_float(v) for k, v in event.fields.items() if k != "Step"
                 }
                 wandb.log(metrics, step=event.step)
                 run.summary.update(metrics)

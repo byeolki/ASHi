@@ -5,4 +5,5 @@ from ..event import Event
 
 class Backend(ABC):
     @abstractmethod
-    def emit(self, event: Event) -> bool: ...
+    def emit(self, event: Event) -> bool:
+        ...

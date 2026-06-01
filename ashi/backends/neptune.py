@@ -38,6 +38,7 @@ class NeptuneBackend(Backend):
     def _neptune():
         try:
             import neptune
+
             return neptune
         except ImportError as exc:
             raise ImportError("neptune is required: pip install neptune") from exc

@@ -41,6 +41,7 @@ class CometBackend(Backend):
     def _comet_ml():
         try:
             import comet_ml
+
             return comet_ml
         except ImportError as exc:
             raise ImportError("comet-ml is required: pip install comet-ml") from exc

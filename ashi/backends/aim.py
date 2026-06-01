@@ -38,6 +38,7 @@ class AimBackend(Backend):
     def _aim():
         try:
             import aim
+
             return aim
         except ImportError as exc:
             raise ImportError("aim is required: pip install aim") from exc

@@ -101,7 +101,13 @@ class TrainLogger:
         if step is not None:
             fields["Step"] = str(step)
         return self._emit(
-            Event(kind="best_metric", title=f"New Best: {metric_name}", fields=fields, color="yellow", step=step)
+            Event(
+                kind="best_metric",
+                title=f"New Best: {metric_name}",
+                fields=fields,
+                color="yellow",
+                step=step,
+            )
         )
 
     def on_checkpoint_saved(self, step: int, path: str) -> bool:
@@ -127,7 +133,9 @@ class TrainLogger:
         description = f"{type(error).__name__}: {error}"
         if context:
             description = f"Context: {context}\n{description}"
-        return self._emit(Event(kind="error", title="Training Error", description=description, color="red"))
+        return self._emit(
+            Event(kind="error", title="Training Error", description=description, color="red")
+        )
 
     def send(self, message: str, color: str = "blue") -> bool:
         return self._emit(Event(kind="message", title=message, color=color))
@@ -154,5 +162,7 @@ class TrainLogger:
                 "No summarizer configured. Pass summarizer=AISummarizer(api_key='sk-...') to TrainLogger."
             )
         summary = self._summarizer.summarize()
-        self._emit(Event(kind="ai_summary", title="AI Summary", description=summary, color="orange"))
+        self._emit(
+            Event(kind="ai_summary", title="AI Summary", description=summary, color="orange")
+        )
         return summary

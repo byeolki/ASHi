@@ -98,9 +98,7 @@ class TestAISummarizer:
     def test_custom_language_in_system_prompt(self):
         s = AISummarizer(api_key="sk-test", language="Korean")
         s.record(Event(kind="epoch_end", title="Epoch 1", fields={"loss": "0.5"}))
-        with patch(
-            "ashi.ai.requests.post", return_value=_mock_openai("학습이 잘 진행되고 있습니다.")
-        ) as mock:
+        with patch("ashi.ai.requests.post", return_value=_mock_openai("학습이 잘 진행되고 있습니다.")) as mock:
             result = s.summarize()
         system_msg = mock.call_args.kwargs["json"]["messages"][0]["content"]
         assert "Korean" in system_msg

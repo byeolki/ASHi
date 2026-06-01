@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ahsi"
-version = "0.1.3"
+version = "0.1.4"
 description = "One logger, every destination — send ML training events to Discord, Slack, Telegram, W&B, MLflow, Comet, Neptune, TensorBoard, Aim, and Console simultaneously"
 authors = ["byeolki <byeolki7007@gmail.com>"]
 readme = "README.md"

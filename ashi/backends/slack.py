@@ -22,8 +22,7 @@ class SlackBackend(Backend):
             "color": SLACK_COLORS.get(event.color, SLACK_COLORS["blue"]),
             "title": event.title,
             "fields": [
-                {"title": k, "value": str(v), "short": True}
-                for k, v in event.fields.items()
+                {"title": k, "value": str(v), "short": True} for k, v in event.fields.items()
             ],
             "footer": "train-logger",
             "ts": int(datetime.now(timezone.utc).timestamp()),

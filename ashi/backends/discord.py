@@ -13,10 +13,7 @@ def _build_embed(event: Event) -> dict:
     embed: dict = {
         "title": event.title,
         "color": COLORS.get(event.color, COLORS["blue"]),
-        "fields": [
-            {"name": k, "value": str(v), "inline": True}
-            for k, v in event.fields.items()
-        ],
+        "fields": [{"name": k, "value": str(v), "inline": True} for k, v in event.fields.items()],
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
     if event.description:
